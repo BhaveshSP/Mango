@@ -2,7 +2,7 @@ import mango
 
 while True :
 	command = input("mango> ")
-	if command == "exit":
+	if command == "exit" or command == "q" or command == "quit":
 		break
 	tokens, error = mango.run("<stdin>",command)
 	if error :
