@@ -126,7 +126,7 @@ class Interpreter:
 		# Get the result of the expression 
 		var_value = result.register(self.visit(node.var_value_node,context))
 		if result.error :
-			result 
+			return result 
 		context.symbol_table.set(var_name,var_value)
 		var_value = var_value.copy().set_position(node.position_start,node.position_end)
 		return result.success(var_value)
@@ -161,3 +161,61 @@ class Interpreter:
 			if result.error:
 				return result 
 		return result.success(value)
+
+
+	# Get result after executing if condition
+	def visit_ForOperatorNode(self,node,context):
+		result = RuntimeResult()
+
+		start_value = result.register(self.visit(node.start_value_node,context))
+		if result.error:
+			return result 
+		end_value = result.register(self.visit(node.end_value_node,context))
+		if result.error:
+			return result 
+		step_value = None 
+		if node.step_value_node:
+			step_value = result.register(self.visit(node.step_value_node,context))
+			if result.error:
+				return result 
+		else:
+			step_value = Number(1)
+		i = start_value.value 
+		condition = None 
+		if step_value.value >= 0:
+			condition = lambda : i <= end_value.value 
+		else:
+			condition = lambda : i >= end_value.value 
+
+		while condition() :
+
+			context.symbol_table.set(node.var_name_token.value,Number(i))
+			i += step_value.value 
+			result.register(self.visit(node.body_node,context))
+			if result.error :
+				return result 
+
+
+		return result.success(None)
+
+
+
+	# Get result after executing if condition
+	def visit_WhileOperatorNode(self,node,context):
+		result = RuntimeResult()
+
+		while True :
+			
+			condition_evaluation = result.register(self.visit(node.condition_node,context))
+			
+			if result.error :
+				return result 
+
+			if not condition_evaluation.is_true():
+				break 
+			result.register(self.visit(node.body_node,context))
+			if result.error :
+				return result
+			 
+		return result.success(None)
+

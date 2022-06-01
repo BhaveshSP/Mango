@@ -26,10 +26,4 @@ TT_THEN = "THEN"
 DIGITS = "1234567890"
 LETTERS = string.ascii_letters
 LETTERS_DIGITS =LETTERS + DIGITS 
-# Built in Keywords for the Language 
-# let - Variable Assignment 
-# and - AND operator 
-# or - OR operator 
-# not - NOT operator 
-# Names can be changed to anything 
-KEYWORDS = ["let","and","or","not" ,"if","then","elseif","else"] 
+KEYWORDS = ["set","and","or","not" ,"if","then","elseif","else","for","do","step","with","to","while"] 

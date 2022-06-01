@@ -49,7 +49,7 @@ class Parser:
 		# It is create according to the rules in the Grammer 
 		result = self.expression()
 		if not result.error and self.current_token.type != TT_EOF:
-			return result.failure(InvalidSyntaxError("Expected '+','-','*', '/' or '^'",self.current_token.position_start,self.current_token.position_end))
+			return result.failure(InvalidSyntaxError("Expected 'set', '+','-','*', '/' or '^'",self.current_token.position_start,self.current_token.position_end))
 		return result 
 	
 	def advance(self):
@@ -79,21 +79,171 @@ class Parser:
 				return result.success(temp_expr)
 			else:
 				return result.failure(InvalidSyntaxError("Expected ')'",token.position_start,token.position_end))
+
 		elif self.current_token.matches(TT_KEYWORD,"if"):
 			if_expr = result.register(self.if_expression())
 			if result.error:
 				return result
+
+			result.register_advancement()
+			self.advance()
 			return result.success(if_expr)
+
+		elif self.current_token.matches(TT_KEYWORD,"for"):
+			for_expr = result.register(self.for_expression())
+			if result.error:
+				return result
+
+			result.register_advancement()
+			self.advance()
+			return result.success(for_expr)
+
+		elif self.current_token.matches(TT_KEYWORD,"while"):
+			while_expr = result.register(self.while_expression())
+			if result.error:
+				return result
+
+			result.register_advancement()
+			self.advance()
+			return result.success(while_expr)
+
 		elif token.type == TT_IDENTIFIER :
 			result.register_advancement()
 			self.advance()
 			return result.success(VarAccessNode(token))
+
 		elif token.type in (TT_INT,TT_FLOAT):
 			result.register_advancement()
 			self.advance()
 			return result.success(NumberNode(token))
 		
 		return result.failure(InvalidSyntaxError("Expected integer, float, identifier , '+', '-' or '('",token.position_start,token.position_end))
+
+
+
+	def for_expression(self):
+
+		result = ParserResult()
+		start_value_node = None 
+		var_name = None 
+		end_value_node = None 
+		step_value_node = None 
+		body_value_node = None 
+		
+		result.register_advancement()
+		self.advance()
+		
+		if self.current_token.type == TT_IDENTIFIER:
+			var_name = self.current_token
+		else:
+			return result.failure(InvalidSyntaxError("Expected a loop variable after for statement",
+			                      self.current_token.position_start,
+			                      self.current_token.position_end
+			                      ))
+
+		result.register_advancement()
+		self.advance()
+
+		if self.current_token.type != TT_EQ:
+			return result.failure(InvalidSyntaxError("Expected '='",
+				                      self.current_token.position_start,
+				                      self.current_token.position_end
+				                      ))
+
+		result.register_advancement()
+		self.advance()
+
+		start_value_node = result.register(self.expression())
+		if result.error :
+			return result 
+
+		if not self.current_token.matches(TT_KEYWORD,"to"):
+			return result.failure(InvalidSyntaxError("Expected 'to' keyword",
+				                      self.current_token.position_start,
+				                      self.current_token.position_end
+				                      ))
+
+		result.register_advancement()
+		self.advance()
+
+		end_value_node = result.register(self.expression())
+
+		if self.current_token.matches(TT_KEYWORD,"with"):
+
+			result.register_advancement()
+			self.advance()
+
+			if not self.current_token.matches(TT_KEYWORD,"step"):
+				return result.failure(InvalidSyntaxError("Expected 'step' keyword after with ",
+				                      self.current_token.position_start,
+				                      self.current_token.position_end
+				                      ))
+
+			result.register_advancement()
+			self.advance()
+
+
+			if not self.current_token.type == TT_EQ:
+				return result.failure(InvalidSyntaxError("Expected '='  ",
+				                      self.current_token.position_start,
+				                      self.current_token.position_end
+				                      ))
+
+			result.register_advancement()
+			self.advance()
+
+
+			step_value_node = result.register(self.expression())
+			if result.error :
+				return result
+
+		if not self.current_token.matches(TT_KEYWORD,"do"):
+			return result.failure(InvalidSyntaxError("Expected 'do' keyword ",
+				                      self.current_token.position_start,
+				                      self.current_token.position_end
+				                      ))
+
+		result.register_advancement()
+		self.advance()
+
+		body_value_node = result.register(self.expression())
+		if result.error :
+			return result 
+
+		return result.success(ForOperatorNode(var_name,start_value_node,end_value_node,step_value_node,body_value_node))
+
+	def while_expression(self):
+
+		result = ParserResult()
+
+		condition = None 
+		body_value_node = None 
+
+		result.register_advancement()
+		self.advance()
+
+		condition = result.register(self.expression())
+
+		if result.error :
+			return result 
+
+		
+		if not self.current_token.matches(TT_KEYWORD,"do"):
+			return result.failure(InvalidSyntaxError("Expected 'do' keyword ",
+				                      self.current_token.position_start,
+				                      self.current_token.position_end
+				                      ))
+
+		result.register_advancement()
+		self.advance()
+
+		body_value_node = result.register(self.expression())
+		if result.error :
+			return result 
+		return result.success(WhileOperatorNode(condition,body_value_node))
+
+
+
 
 	def if_expression(self):
 		result = ParserResult()
@@ -157,6 +307,7 @@ class Parser:
 	def factor(self):
 
 		result = ParserResult()
+
 		token = self.current_token 
 
 		if token.type in (TT_PLUS,TT_MINUS):
@@ -171,6 +322,7 @@ class Parser:
 
 	def binary_operator_helper(self,func_a,operations,func_b=None):
 		result = ParserResult()
+
 		if not func_b:
 			func_b = func_a 
 		left_node = result.register(func_a())
@@ -191,6 +343,7 @@ class Parser:
 
 	def comp_expr(self):
 		result = ParserResult()
+
 		if self.current_token.matches(TT_KEYWORD,"not"):
 			operator_token = self.current_token 
 			result.register_advancement()
@@ -201,7 +354,7 @@ class Parser:
 			return result.success(UnaryOperatorNode(operator_token,node))
 		node = result.register(self.binary_operator_helper(self.arith_expr,(TT_NE,TT_EE,TT_LT,TT_LTE,TT_GT,TT_GTE)))
 		if result.error :
-			return result.failure(InvalidSyntaxError("Expected 'let', integer, float, identifier , '+', '-' , '(', or  not ",
+			return result.failure(InvalidSyntaxError("Expected 'set', integer, float, identifier , '+', '-' , '(', or  not ",
 				                      self.current_token.position_start,
 				                      self.current_token.position_end
 				                      ))
@@ -211,7 +364,8 @@ class Parser:
 
 	def expression(self):
 		result = ParserResult()
-		if self.current_token.matches(TT_KEYWORD,"let"):
+
+		if self.current_token.matches(TT_KEYWORD,"set"):
 			result.register_advancement()
 			self.advance()
 			
@@ -237,7 +391,7 @@ class Parser:
 		node =  result.register(self.binary_operator_helper(self.comp_expr,((TT_KEYWORD,"and"),(TT_KEYWORD,"or"))))
 		
 		if result.error : 
-			return result.failure(InvalidSyntaxError("Expected 'let', integer, float, identifier , '+', '-' , '(', or  not ",
+			return result.failure(InvalidSyntaxError("Expected 'set', integer, float, identifier , '+', '-' , '(', or  not ",
 				                      self.current_token.position_start,
 				                      self.current_token.position_end
 				                      ))

@@ -82,3 +82,5 @@ class RuntimeError(Error):
 		start_index = position_start.col - 3 if position_start.col > 2 else position_start.col 
 		arrow_string += " "*(start_index)  
 		return arrow_string + "^" +  ("^"*(position_end.col - position_start.col ))
+	def __repr__(self):
+		return f"RuntimeError {self.message}"

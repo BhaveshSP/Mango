@@ -62,3 +62,26 @@ class IfOperatorNode:
 	def __repr__(self):
 		return f"conditions:{self.cases},else:{self.else_node}"
 
+
+# Node to Store the For Loop Values in AST 
+class ForOperatorNode:
+	def __init__(self,var_name_token, start_value_node, end_value_node, step_value_node, body_node):
+		self.var_name_token = var_name_token
+		self.start_value_node = start_value_node
+		self.end_value_node = end_value_node
+		self.step_value_node = step_value_node
+		self.body_node = body_node
+		self.position_start = var_name_token.position_start
+		self.position_end = body_node.position_end
+
+
+# Node to Store the While Loop Values is AST 
+class WhileOperatorNode:
+	def __init__(self,condition_node,body_node):
+		self.condition_node = condition_node 
+		self.body_node = body_node
+		self.position_start = condition_node.position_start
+		self.position_end = body_node.position_end
+
+
+

@@ -1,4 +1,4 @@
-expr := KEYWORDS:VAR IDENTIFIER EQ expr 
+expr := KEYWORDS:SET IDENTIFIER EQ expr 
         comp-expr ((KEYWORD:OR|KEYWORD:AND) comp-expr)*
 
 comp-expr :=  NOT comp-expr 
@@ -17,9 +17,15 @@ power := atom (POW factor)*
 atom := INT|FLOAT|IDENTIFIER
         LPAREN expr RPAREN
         if-expr
+        for-expr
+        while-expr
 
 if-expr := KEYWORDS:IF expr KEYWORDS:THEN expr
            (KEYWORDS:ELSEIF expr KEYWORDS:THEN expr)*
            (KEYWORDS:ELSE expr)?
   
+for-expr := KEYWORDS:FOR IDENTIFIER EQ expr KEYWORDS:TO expr 
+             (KEYWORDS:WITH KEYWORDS:STEP expr)? KEYWORDS:DO expr 
 
+
+while-expr := KEYWORDS:WHILE expr KEYWORDS:DO expr
