@@ -12,6 +12,7 @@ class Token:
 	# Create Token in Form of Type:Value if Value if not None 
 	def matches(self,type_,value):
 		return self.type == type_ and self.value == value 
+
 	def __repr__(self):
 		output = f"{self.type}:{self.value}" if self.value or self.value == 0 else f"{self.type}"
 		return output 

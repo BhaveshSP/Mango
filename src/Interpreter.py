@@ -141,3 +141,23 @@ class Interpreter:
 			# if the variable doesn't exist return error
 			return result.failure(RuntimeError(f"'{var_name}' is not defined",node.position_start,node.position_end,context))
 		return result.success(value)
+
+	# Get result after executing if condition
+	def visit_IfOperatorNode(self,node,context):
+		result = RuntimeResult()
+		cases = node.cases
+		value = None 
+		for condition,expr in cases:
+			condition_evaluation = result.register(self.visit(condition,context))
+			if result.error :
+				return result 
+			if condition_evaluation.is_true():
+				value = result.register(self.visit(expr,context))
+				if result.error :
+					return result 
+				break
+		if value == None :
+			value = result.register(self.visit(node.else_node ,context))
+			if result.error:
+				return result 
+		return result.success(value)

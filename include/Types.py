@@ -19,6 +19,8 @@ TT_GT = "GT"
 TT_GTE = "GTE"
 TT_EOF = "EOF"
 TT_POW = "^"
+TT_IF = "IF"
+TT_THEN = "THEN"
 
 # Sets 
 DIGITS = "1234567890"
@@ -30,4 +32,4 @@ LETTERS_DIGITS =LETTERS + DIGITS
 # or - OR operator 
 # not - NOT operator 
 # Names can be changed to anything 
-KEYWORDS = ["let","and","or","not" ] 
+KEYWORDS = ["let","and","or","not" ,"if","then","elseif","else"] 

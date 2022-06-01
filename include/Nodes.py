@@ -16,6 +16,8 @@ class VarAssignNode:
 		self.var_value_node = var_value_node
 		self.position_start = var_name_token.position_start
 		self.position_end = var_value_node.position_end 
+	def __repr__(self):
+		return f"({self.var_name_token}:{(self.var_value_node)})"
 
 # Node to Access Value of a Variable in AST 
 class VarAccessNode:
@@ -23,6 +25,8 @@ class VarAccessNode:
 		self.var_name_token = var_name_token
 		self.position_start = var_name_token.position_start
 		self.position_end = var_name_token.position_end 
+	def __repr__(self):
+		return f"{self.var_name_token}"
 
 # Node to Store the Binary Operator with (left operand) operator (right operand) 
 # format in AST 
@@ -45,3 +49,16 @@ class UnaryOperatorNode:
 		self.position_end = node.position_end
 	def __repr__(self):
 		return f"{self.operator_node,self.node}"
+
+# Node to Store the If Operator with cases(condition,expression) format in AST 
+class IfOperatorNode:
+	def __init__(self,cases,else_node):
+		self.cases = cases
+		self.else_node = else_node 
+		self.position_start = cases[0][0].position_start
+		self.position_end = cases[-1][1].position_end
+		if else_node :
+		 self.position_end = else_node.position_end
+	def __repr__(self):
+		return f"conditions:{self.cases},else:{self.else_node}"
+

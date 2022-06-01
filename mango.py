@@ -27,10 +27,11 @@ def run(file_name,text):
 	parser = Parser(tokens)
 	# AST - Abstract Syntax Tree  
 	# Create a AST  
+	# print(tokens)
 	ast = parser.parse()
 	if ast.error :
 		return None , ast.error 
-	# print(ast)
+	# print(ast.node)
 	# Initialize the Interpreter 
 	interpreter = Interpreter()
 	# Create Root Context 

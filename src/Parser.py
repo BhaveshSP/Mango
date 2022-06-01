@@ -14,6 +14,10 @@ class ParserResult:
 	def register_advancement(self):
 		self.advance_count += 1 
 
+	def register_decreament(self):
+		self.advance_count += 1 
+
+
 	def register(self,result):
 		self.advance_count += result.advance_count
 		if result.error :
@@ -41,9 +45,8 @@ class Parser:
 		self.current_token = None
 		self.advance()
 
-	def parse(self):
-		# Top Root is a Expression 
-		# it is create according to the rules in the Grammer 
+	def parse(self): 
+		# It is create according to the rules in the Grammer 
 		result = self.expression()
 		if not result.error and self.current_token.type != TT_EOF:
 			return result.failure(InvalidSyntaxError("Expected '+','-','*', '/' or '^'",self.current_token.position_start,self.current_token.position_end))
@@ -54,6 +57,12 @@ class Parser:
 		if self.index < self.size :
 			self.current_token = self.tokens[self.index]
 		return self.current_token 
+	def go_back(self):
+		self.index -= 1 
+		if self.index >=0 :
+			self.current_token = self.tokens[self.index]
+		return self.current_token
+
 
 	# Functions Created According to the Grammer Rules 
 	def atom(self):
@@ -70,6 +79,11 @@ class Parser:
 				return result.success(temp_expr)
 			else:
 				return result.failure(InvalidSyntaxError("Expected ')'",token.position_start,token.position_end))
+		elif self.current_token.matches(TT_KEYWORD,"if"):
+			if_expr = result.register(self.if_expression())
+			if result.error:
+				return result
+			return result.success(if_expr)
 		elif token.type == TT_IDENTIFIER :
 			result.register_advancement()
 			self.advance()
@@ -81,9 +95,64 @@ class Parser:
 		
 		return result.failure(InvalidSyntaxError("Expected integer, float, identifier , '+', '-' or '('",token.position_start,token.position_end))
 
+	def if_expression(self):
+		result = ParserResult()
+		cases = []
+		else_node = None 
+		result.register_advancement()
+		self.advance()
+		condition = result.register(self.expression())
+		if result.error:
+			return result.failure(InvalidSyntaxError("Expected a <condition> after an if statement",
+			                      self.current_token.position_start,
+			                      self.current_token.position_end
+			                      ))
+
+		if not self.current_token.matches(TT_KEYWORD,"then"):
+			return result.failure(InvalidSyntaxError("Expected 'then' after <condition>",
+			                      self.current_token.position_start,
+			                      self.current_token.position_end
+			                      ))
+		result.register_advancement()
+		self.advance()
+		temp_expr = result.register(self.expression())
+		if result.error :
+			return result 
+		cases.append((condition,temp_expr))
+		while self.current_token.matches(TT_KEYWORD,"elseif"):
+			result.register_advancement()
+			self.advance()
+			condition = result.register(self.expression())
+			if result.error:
+				return result.failure(InvalidSyntaxError("Expected a <condition> after an if or elseif statement",
+				                      self.current_token.position_start,
+				                      self.current_token.position_end
+				                      ))
+			if not self.current_token.matches(TT_KEYWORD,"then"):
+				return result.failure(InvalidSyntaxError("Expected 'then' after <condition>",
+				                      self.current_token.position_start,
+				                      self.current_token.position_end
+				                      ))
+			result.register_advancement()
+			self.advance()
+			temp_expr = result.register(self.expression())
+			if result.error :
+				return result 
+			cases.append((condition,temp_expr)) 
+		if self.current_token.matches(TT_KEYWORD,"else"):
+			result.register_advancement()
+			self.advance()
+			else_node = result.register(self.expression())
+			if result.error :
+				return result 
+		else:
+			result.register_decreament()
+			self.go_back()
+
+		return result.success(IfOperatorNode(cases,else_node))
+
 	def power(self):
 		return self.binary_operator_helper(self.atom,(TT_POW,),self.factor)
-
 
 	def factor(self):
 
@@ -163,6 +232,7 @@ class Parser:
 			if result.error :
 				return result 
 			return result.success(VarAssignNode(var_name,expr))
+		
 
 		node =  result.register(self.binary_operator_helper(self.comp_expr,((TT_KEYWORD,"and"),(TT_KEYWORD,"or"))))
 		
