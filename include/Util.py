@@ -32,3 +32,32 @@ class Position:
 	def copy(self):
 		return Position(self.index,self.line,self.col,self.file_name,self.text)
 
+# Used to Keep track of the context. Useful in Generating Error Traceback 
+class Context:
+	def __init__(self,display_name,parent_context=None,parent_entry_position=None):
+		self.display_name = display_name
+		self.parent_context = parent_context
+		self.parent_entry_position = parent_entry_position
+		self.symbol_table = None 
+	
+# Used to Store the Varible and their values as a Key-Pair format in Dictionary
+class SymbolTable:
+	
+	def __init__(self):
+		self.symbols = {}
+		self.parent = None 
+	
+	def get(self,var_name):
+		value = self.symbols.get(var_name,None)
+		if value == None and self.parent :
+			value = self.parent.get(var_name)
+		return value 
+
+	def set(self,var_name,var_value):
+		self.symbols[var_name] = var_value
+		
+	def remove(self,var_name):
+		del self.symbols[var_name]
+		
+	def __repr(self):
+		return f"{self.symbol_table}"
