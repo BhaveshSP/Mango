@@ -1,31 +1,37 @@
-expr := KEYWORDS:SET IDENTIFIER EQ expr 
-        comp-expr ((KEYWORD:OR|KEYWORD:AND) comp-expr)*
+expr  : KEYWORDS:SET IDENTIFIER EQ expr 
+      : comp-expr ((KEYWORD:OR|KEYWORD:AND) comp-expr)*
 
-comp-expr :=  NOT comp-expr 
-              arith-expr ((LT|GT|EE|NE|LTE|GTE) arith-expr)*
+comp-expr   : NOT comp-expr 
+            : arith-expr ((LT|GT|EE|NE|LTE|GTE) arith-expr)*
 
-arith-expr := term ((PLUS|MINUS) term)*
+arith-expr : term ((PLUS|MINUS) term)*
 
-term := factor ((MUL|DIV) factor)*
+term : factor ((MUL|DIV) factor)*
 
 
-factor := (PLUS|MINUS) factor
-           power  
+factor : (PLUS|MINUS) factor
+       : power  
 
-power := atom (POW factor)*
+power : call (POW factor)*
 
-atom := INT|FLOAT|IDENTIFIER
-        LPAREN expr RPAREN
-        if-expr
-        for-expr
-        while-expr
+call : atom (LPAREN (expr (COMMA expr)*)? RPAREN )?
 
-if-expr := KEYWORDS:IF expr KEYWORDS:THEN expr
+atom    : INT|FLOAT|IDENTIFIER
+        : LPAREN expr RPAREN
+        : if-expr
+        : for-expr
+        : while-expr
+        : func-def
+
+if-expr : KEYWORDS:IF expr KEYWORDS:THEN expr
            (KEYWORDS:ELSEIF expr KEYWORDS:THEN expr)*
            (KEYWORDS:ELSE expr)?
   
-for-expr := KEYWORDS:FOR IDENTIFIER EQ expr KEYWORDS:TO expr 
+for-expr : KEYWORDS:FOR IDENTIFIER EQ expr KEYWORDS:TO expr 
              (KEYWORDS:WITH KEYWORDS:STEP expr)? KEYWORDS:DO expr 
 
 
-while-expr := KEYWORDS:WHILE expr KEYWORDS:DO expr
+while-expr : KEYWORDS:WHILE expr KEYWORDS:DO expr
+
+func-def : KEYWORDS:FUNCTION IDENTIFIER? 
+           LPAREN (IDENTIFIER (COMMA IDENTIFIER)*)? RPAREN ARROW expr

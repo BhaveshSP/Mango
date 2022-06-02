@@ -21,9 +21,13 @@ TT_EOF = "EOF"
 TT_POW = "^"
 TT_IF = "IF"
 TT_THEN = "THEN"
+TT_ARROW = "ARROW"
+TT_COMMA = "COMMA"
 
 # Sets 
 DIGITS = "1234567890"
 LETTERS = string.ascii_letters
 LETTERS_DIGITS =LETTERS + DIGITS 
-KEYWORDS = ["set","and","or","not" ,"if","then","elseif","else","for","do","step","with","to","while"] 
+KEYWORDS = ["set","and","or","not" ,"if","then",
+            "elseif","else","for","do","step","with",
+            "to","while","function"] 

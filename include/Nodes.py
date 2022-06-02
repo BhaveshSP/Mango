@@ -85,3 +85,32 @@ class WhileOperatorNode:
 
 
 
+# Node to Store the Function Definition in AST 
+class FunctionDefinitionNode:
+	def __init__(self,var_name_token,arg_name_tokens,body_node):
+		self.var_name_token = var_name_token
+		self.arg_name_tokens = arg_name_tokens
+		self.body_node = body_node
+		self.arg_size = len(arg_name_tokens)
+		if var_name_token :
+			self.position_start = var_name_token.position_start
+		elif self.arg_size > 0 :
+			self.position_start = self.arg_name_tokens[0].position_start 
+		else:
+			self.position_start = body_node.position_start
+
+		self.position_end = body_node.position_end
+
+
+# Node to Store the Function Call in AST 
+class CallNode:
+
+	def __init__(self,node_to_call,arg_nodes):
+		self.node_to_call = node_to_call
+		self.arg_nodes = arg_nodes
+		self.arg_size = len(arg_nodes)
+		self.position_start = node_to_call.position_start
+		if self.arg_size > 0 :
+			self.position_end = arg_nodes[-1].position_end
+		else:
+			self.position_end = node_to_call.position_end

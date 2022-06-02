@@ -65,6 +65,8 @@ class Parser:
 
 
 	# Functions Created According to the Grammer Rules 
+
+
 	def atom(self):
 		result = ParserResult()
 		token = self.current_token 
@@ -107,6 +109,15 @@ class Parser:
 			self.advance()
 			return result.success(while_expr)
 
+		elif self.current_token.matches(TT_KEYWORD,"function"):
+			func_def = result.register(self.func_def())
+			if result.error:
+				return result
+
+			result.register_advancement()
+			self.advance()
+			return result.success(func_def)
+
 		elif token.type == TT_IDENTIFIER :
 			result.register_advancement()
 			self.advance()
@@ -117,7 +128,67 @@ class Parser:
 			self.advance()
 			return result.success(NumberNode(token))
 		
-		return result.failure(InvalidSyntaxError("Expected integer, float, identifier , '+', '-' or '('",token.position_start,token.position_end))
+		return result.failure(InvalidSyntaxError("Expected integer, float, identifier , '+', '-' , '(', if , for, while or function",token.position_start,token.position_end))
+
+
+	def func_def(self):
+		result = ParserResult()
+		var_name_token = None 
+		args_names_tokens = []
+		node_to_return = None 
+
+		result.register_advancement()
+		self.advance()
+
+		if self.current_token.type == TT_IDENTIFIER:
+			var_name_token = self.current_token 
+			result.register_advancement()
+			self.advance()
+		if self.current_token.type != TT_LPAREN:
+			if var_name_token :
+				return result.failure(InvalidSyntaxError("Expected '('",self.current_token.position_start,self.current_token.position_end))
+			else:
+				return result.failure(InvalidSyntaxError("Expected identifier or '('",self.current_token.position_start,self.current_token.position_end))
+
+		result.register_advancement()
+		self.advance()
+
+		if self.current_token.type == TT_IDENTIFIER:
+			
+			args_names_tokens.append(self.current_token)
+			result.register_advancement()
+			self.advance()
+
+			while self.current_token.type == TT_COMMA:
+				result.register_advancement()
+				self.advance()
+				if self.current_token.type != TT_IDENTIFIER:
+					return result.failure(InvalidSyntaxError("Expected identifier",self.current_token.position_start,self.current_token.position_end))
+				args_names_tokens.append(self.current_token)
+				result.register_advancement()
+				self.advance()
+		if self.current_token.type != TT_RPAREN:
+			if len(args_names_tokens) > 0:
+				return result.failure(InvalidSyntaxError("Expected ',' or ')'",self.current_token.position_start,self.current_token.position_end))
+			else:
+				result.failure(InvalidSyntaxError("Expected identifier or ')'",self.current_token.position_start,self.current_token.position_end))
+
+		result.register_advancement()
+		self.advance()
+
+
+		if self.current_token.type != TT_ARROW:
+			return result.failure(InvalidSyntaxError("Expected '=>'",self.current_token.position_start,self.current_token.position_end))
+
+		result.register_advancement()
+		self.advance()
+
+
+		node_to_return = result.register(self.expression())
+		if result.error :
+			return result 
+		return result.success(FunctionDefinitionNode(var_name_token,args_names_tokens,node_to_return))
+
 
 
 
@@ -302,7 +373,50 @@ class Parser:
 		return result.success(IfOperatorNode(cases,else_node))
 
 	def power(self):
-		return self.binary_operator_helper(self.atom,(TT_POW,),self.factor)
+		return self.binary_operator_helper(self.call,(TT_POW,),self.factor)
+
+	def call(self):
+		result = ParserResult()
+		atom = result.register(self.atom())
+		if result.error :
+			return result 
+		if self.current_token.type == TT_LPAREN:
+			args_nodes = []
+			result.register_advancement()
+			self.advance()
+			if self.current_token.type == TT_RPAREN:
+				result.register_advancement()
+				self.advance()
+			else:
+				temp_expr = result.register(self.expression())
+				if result.error:
+					return result.failure(InvalidSyntaxError("Expected ')', integer, float, identifier , '+', '-' ",
+					                      self.current_token.position_start,
+					                      self.current_token.position_end
+					                      ))
+				
+				args_nodes.append(temp_expr)
+				while self.current_token != None and self.current_token.type == TT_COMMA :
+					result.register_advancement()
+					self.advance()
+					temp_expr = result.register(self.expression())
+					if result.error:
+						return result 
+					args_nodes.append(temp_expr)
+
+
+				if self.current_token.type != TT_RPAREN:
+					
+					return result.failure(InvalidSyntaxError("Expected ',' or ')'",
+					                      self.current_token.position_start,
+					                      self.current_token.position_end
+					                      ))
+				result.register_advancement()
+				self.advance()
+
+			return result.success(CallNode(atom,args_nodes))
+		return result.success(atom)
+
 
 	def factor(self):
 
@@ -391,7 +505,7 @@ class Parser:
 		node =  result.register(self.binary_operator_helper(self.comp_expr,((TT_KEYWORD,"and"),(TT_KEYWORD,"or"))))
 		
 		if result.error : 
-			return result.failure(InvalidSyntaxError("Expected 'set', integer, float, identifier , '+', '-' , '(', or  not ",
+			return result.failure(InvalidSyntaxError("Expected 'set', integer, float, identifier , if , for, while , function, '+', '-' , '(', or  not ",
 				                      self.current_token.position_start,
 				                      self.current_token.position_end
 				                      ))

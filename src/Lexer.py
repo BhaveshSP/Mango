@@ -59,6 +59,9 @@ class Lexer:
 	 		# Create token for TT_POW
 	 		elif self.current_char == "^":
 	 			token = Token(TT_POW,self.position)
+	 		# Create token for TT_COMMA
+	 		elif self.current_char == ",":
+	 			token = Token(TT_COMMA,self.position)
 	 		# Create token for Not Equals
 	 		elif self.current_char == "!":
 	 			token, error = self.make_not_equal()
@@ -95,7 +98,6 @@ class Lexer:
 	 		if token:
 	 			tokens.append(token)
 	 	tokens.append(Token(TT_EOF,self.position))
-	 	print("")
 	 	return tokens,error  
 
 	 # Create token for Not Equals
@@ -115,6 +117,8 @@ class Lexer:
 	 	type_ = TT_EQ
 	 	if self.current_char == "=":
 	 		type_ = TT_EE 
+	 	elif self.current_char == ">":
+	 		type_ = TT_ARROW
 	 	else:
 	 		self.go_back()
 	 	return Token(type_,position_start,self.position)

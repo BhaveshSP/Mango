@@ -43,21 +43,22 @@ class Context:
 # Used to Store the Varible and their values as a Key-Pair format in Dictionary
 class SymbolTable:
 	
-	def __init__(self):
-		self.symbols = {}
-		self.parent = None 
+	def __init__(self,parent=None):
+		self.symbol_table = {}
+		self.parent = parent
 	
 	def get(self,var_name):
-		value = self.symbols.get(var_name,None)
+		value = self.symbol_table.get(var_name,None)
+		
 		if value == None and self.parent :
 			value = self.parent.get(var_name)
 		return value 
 
 	def set(self,var_name,var_value):
-		self.symbols[var_name] = var_value
+		self.symbol_table[var_name] = var_value
 		
 	def remove(self,var_name):
-		del self.symbols[var_name]
+		del self.symbol_table[var_name]
 		
-	def __repr(self):
+	def __repr__(self):
 		return f"{self.symbol_table}"

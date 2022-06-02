@@ -1,6 +1,7 @@
 from include.Values import * 
 from include.Types import *
 
+
 # Result Class to Handle the Value and Error of the Interpreter 
 class RuntimeResult:
 	
@@ -128,7 +129,15 @@ class Interpreter:
 		if result.error :
 			return result 
 		context.symbol_table.set(var_name,var_value)
-		var_value = var_value.copy().set_position(node.position_start,node.position_end)
+		temp  = context.symbol_table
+		while temp.get(var_name) != None :
+			temp = temp.parent
+			if temp == None:
+				break
+			if temp.get(var_name) == None:
+				break
+			temp.set(var_name,var_value)  
+		var_value = var_value.copy().set_context(context).set_position(node.position_start,node.position_end)
 		return result.success(var_value)
 
 	# Access the Value of the Variable in the Symbol Table 
@@ -137,6 +146,8 @@ class Interpreter:
 		var_name = node.var_name_token.value 
 		# Get the value of the variable from the symbol table if exist
 		value = context.symbol_table.get(var_name)
+		
+
 		if value == None :
 			# if the variable doesn't exist return error
 			return result.failure(RuntimeError(f"'{var_name}' is not defined",node.position_start,node.position_end,context))
@@ -218,4 +229,42 @@ class Interpreter:
 				return result
 			 
 		return result.success(None)
+
+	def visit_FunctionDefinitionNode(self,node,context):
+		result = RuntimeResult()
+		name = None 
+		if node.var_name_token :
+			name = node.var_name_token.value 
+		body_node = node.body_node
+		arg_names = [arg.value for arg in node.arg_name_tokens]
+
+		func_value = Function(name,arg_names,body_node).set_context(context).set_position(node.position_start,node.position_end)
+
+		if name:
+			context.symbol_table.set(name,func_value)
+
+		return result.success(func_value)
+
+	def visit_CallNode(self,node,context):
+		result = RuntimeResult()
+		args = [] 
+
+		value_to_call = result.register(self.visit(node.node_to_call,context))
+		if result.error:
+			return result 
+
+		value_to_call = value_to_call.copy().set_context(context).set_position(node.position_start,node.position_end)
+		
+		for arg_node in node.arg_nodes:
+			args.append(result.register(self.visit(arg_node,context)))
+			if result.error :
+				return result
+
+		result_new = RuntimeResult()
+		interpreter_new = Interpreter()
+
+		return_value = result.register(value_to_call.execute(args,result_new,interpreter_new))
+		if result.error:
+			return result
+		return result.success(return_value)
 

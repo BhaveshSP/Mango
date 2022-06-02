@@ -69,7 +69,7 @@ class RuntimeError(Error):
 		current_pos = self.position_start
 		current_context = self.context
 		while current_context :
-			result += f"File {current_pos.file_name}, Line No {current_pos.line} , in {current_context.display_name}\n"
+			result = f"File {current_pos.file_name}, Line No {current_pos.line} , in {current_context.display_name}\n" + result 
 			current_pos = current_context.parent_entry_position
 			current_context = current_context.parent_context 
 		return result 
