@@ -127,6 +127,14 @@ class Parser:
 			result.register_advancement()
 			self.advance()
 			return result.success(NumberNode(token))
+
+
+		elif token.type == TT_STRING:
+
+			result.register_advancement()
+			self.advance()
+			return result.success(StringNode(token))
+			
 		
 		return result.failure(InvalidSyntaxError("Expected integer, float, identifier , '+', '-' , '(', if , for, while or function",token.position_start,token.position_end))
 

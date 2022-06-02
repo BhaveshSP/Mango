@@ -9,6 +9,15 @@ class NumberNode:
 	def __repr__(self):
 		return f"{self.token}"
 
+
+class StringNode:
+	def __init__(self,token):
+		self.token = token 
+		self.position_start = token.position_start
+		self.position_end = token.position_end
+	def __repr__(self):
+		return f"{self.token}"
+
 # Node to Assign a Variable a Value in AST 
 class VarAssignNode:
 	def __init__(self,var_name_token,var_value_node):

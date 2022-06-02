@@ -62,6 +62,9 @@ class Lexer:
 	 		# Create token for TT_COMMA
 	 		elif self.current_char == ",":
 	 			token = Token(TT_COMMA,self.position)
+
+	 		elif self.current_char == '"':
+	 			token, error = self.make_string()
 	 		# Create token for Not Equals
 	 		elif self.current_char == "!":
 	 			token, error = self.make_not_equal()
@@ -156,6 +159,31 @@ class Lexer:
 	 	# If not in keywords its a variable  
 	 	type_ = TT_KEYWORD if identifier_string in KEYWORDS else TT_IDENTIFIER
 	 	return Token(type_,position_start,self.position,identifier_string)
+
+
+
+	 # Create token for identifier
+	 def make_string(self):
+	 	string = ""
+	 	position_start = self.position.copy()
+	 	escape_char = False 
+	 	escape_char_dictionary  = {"n":"\n","t":"\t"}
+	 	self.advance()
+
+	 	while self.current_char!= None and (self.current_char != '"' or escape_char):
+	 		if escape_char :
+	 			string += escape_char_dictionary.get(self.current_char,self.current_char)
+	 			escape_char = False 
+	 		else:
+	 			if self.current_char == "\\":
+	 				escape_char = True 
+	 			else:
+	 				string += self.current_char 
+
+	 		self.advance()
+
+	 	return Token(TT_STRING,position_start,self.position,string) , None 
+
 
 
 	 # Extract the Number From the Sentence 

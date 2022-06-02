@@ -257,9 +257,6 @@ class Function(Value):
 		return result.success(return_value)
 
 
-
-
-
 	def copy(self):
 		duplicate = Function(self.name,self.args,self.body_node)
 		duplicate.set_context(self.context)
@@ -268,3 +265,34 @@ class Function(Value):
 
 	def __repr__(self):
 		return f"function {self.name}"
+
+
+class String(Value):
+	def __init__(self,value):
+		super().__init__(value)
+
+	def added_to(self,other_node):
+		if isinstance(other_node,String):
+			return String(self.value+other_node.value).set_context(self.context).set_position(self.position_start,other_node.position_end), None 
+		else:
+			return None , illegal_operator_error(other_node)
+	
+	def multiply_by(self,other_node):
+		if isinstance(other_node,Number):
+			return String(self.value * other_node.value).set_context(self.context).set_position(self.position_start,self.position_end), None 
+		else:
+			return None, illegal_operator_error(other_node)
+
+	def is_true(self):
+		return len(self.value ) > 0
+	
+	def copy(self):
+		duplicate = String(self.value)
+		duplicate.set_context(self.context)
+		duplicate.set_position(self.position_start,self.position_end)
+		return duplicate
+
+	def __repr__(self):
+		return f'"{self.value}"'
+
+

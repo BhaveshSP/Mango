@@ -2,6 +2,7 @@ import string
 # Token Types
 TT_IDENTIFIER = "IDENTIFIER"
 TT_KEYWORD = "KEYWORD"
+TT_STRING = "STRING"
 TT_EQ = "EQ"
 TT_INT = "INT"
 TT_FLOAT = "FLOAT"

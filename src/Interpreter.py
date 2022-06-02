@@ -268,3 +268,8 @@ class Interpreter:
 			return result
 		return result.success(return_value)
 
+	def visit_StringNode(self,node,context):	
+		return RuntimeResult().success(String(node.token.value).set_context(context).set_position(node.position_start,node.position_end))
+
+
+
