@@ -18,6 +18,20 @@ class StringNode:
 	def __repr__(self):
 		return f"{self.token}"
 
+
+class ListNode:
+	def __init__(self,element_nodes,position_start,position_end):
+		self.element_nodes = element_nodes 
+		self.position_start = position_start
+		self.position_end = position_end
+
+
+	def __repr__(self):
+		return f"{self.element_nodes}"
+
+
+
+
 # Node to Assign a Variable a Value in AST 
 class VarAssignNode:
 	def __init__(self,var_name_token,var_value_node):

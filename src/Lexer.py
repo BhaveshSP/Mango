@@ -47,15 +47,27 @@ class Lexer:
 	 		# Create token for TT_MUL
 	 		elif self.current_char == "*":
 	 			token = Token(TT_MUL,self.position)
-	 		# Create token for TT_DIVminus
+	 		# Create token for TT_DIV
 	 		elif self.current_char == "/":
 	 			token = Token(TT_DIV,self.position)
+
+	 		# Create token for TT_MOD
+	 		elif self.current_char == "%":
+	 			token = Token(TT_MOD,self.position)
+	 			
 	 		# Create token for TT_LPAREN
 	 		elif self.current_char == "(":
 	 			token = Token(TT_LPAREN,self.position)
 	 		# Create token for TT_RPAREN
 	 		elif self.current_char == ")":
 	 			token = Token(TT_RPAREN,self.position)
+
+	 		# Create token for TT_LSQUARE
+	 		elif self.current_char == "[":
+	 			token = Token(TT_LSQUARE,self.position)
+	 		# Create token for TT_RSQUARE
+	 		elif self.current_char == "]":
+	 			token = Token(TT_RSQUARE,self.position)
 	 		# Create token for TT_POW
 	 		elif self.current_char == "^":
 	 			token = Token(TT_POW,self.position)

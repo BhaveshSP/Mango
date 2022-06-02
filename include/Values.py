@@ -7,8 +7,7 @@ from include.Util import *
 
 class Value:
 
-	def __init__(self,value):
-		self.value = value 
+	def __init__(self):
 		self.set_position()
 		self.set_context()
 
@@ -32,6 +31,11 @@ class Value:
 
 	def divide_by(self,other_node):
 		return None , self.illegal_operator_error(other_node)
+
+
+	def moded_by(self,other_node):
+		return None , self.illegal_operator_error(other_node)
+
 
 	def power(self,other_node):
 
@@ -97,10 +101,11 @@ class Value:
 
 
 class Number(Value):	
+
 	def __init__(self,value):
+		super().__init__()
 		self.value = value 
-		self.set_position()
-		self.set_context()
+
 
 	def set_position(self,position_start=None,position_end=None):
 		self.position_start = position_start 
@@ -140,6 +145,13 @@ class Number(Value):
 				           self.context
 				           )
 			return Number(self.value / other_node.value).set_context(self.context), None
+		else:
+			return None , Value.illegal_operator_error(other_node)
+
+
+	def moded_by(self,other_node):
+		if isinstance(other_node,Number):
+			return Number(self.value % other_node.value).set_context(self.context), None 
 		else:
 			return None , Value.illegal_operator_error(other_node)
 
@@ -223,6 +235,7 @@ class Number(Value):
 class Function(Value):
 
 	def __init__(self,name,args,body_node):
+		super().__init__()
 		self.name = name or "<anonymous>"
 		self.args = args
 		self.body_node = body_node
@@ -268,20 +281,22 @@ class Function(Value):
 
 
 class String(Value):
+
 	def __init__(self,value):
-		super().__init__(value)
+		super().__init__()
+		self.value = value 
 
 	def added_to(self,other_node):
 		if isinstance(other_node,String):
 			return String(self.value+other_node.value).set_context(self.context).set_position(self.position_start,other_node.position_end), None 
 		else:
-			return None , illegal_operator_error(other_node)
+			return None , Value.illegal_operator_error(other_node)
 	
 	def multiply_by(self,other_node):
 		if isinstance(other_node,Number):
 			return String(self.value * other_node.value).set_context(self.context).set_position(self.position_start,self.position_end), None 
 		else:
-			return None, illegal_operator_error(other_node)
+			return None, Value.illegal_operator_error(other_node)
 
 	def is_true(self):
 		return len(self.value ) > 0
@@ -293,6 +308,68 @@ class String(Value):
 		return duplicate
 
 	def __repr__(self):
-		return f'"{self.value}"'
+		return f"{self.value}"
 
 
+class List(Value):
+
+	def __init__(self,elements,print_in_new_line=False):
+		super().__init__()
+		self.elements = elements
+		self.print_in_new_line = print_in_new_line
+
+	def added_to(self,other_node):
+		new_list = self.copy()
+		new_list.elements.append(other_node)
+		return new_list, None
+
+	def multiply_by(self,other_node):
+		if isinstance(other_node,List):
+			new_list = self.copy()
+			new_list.elements.extend(other_node.elements)
+			return new_list,None 
+		else:
+			return None, Value.illegal_operator_error(other_node)
+
+	def subtracted_by(self,other_node):
+		if isinstance(other_node,Number):
+			new_list = self.copy()
+			try:
+				other_node.value -=  1 
+				new_list.elements.pop(other_node.value)
+				return new_list, None 
+			except :
+				return None, RuntimeError(f"IndexOutOfBound : Element at index {other_node.value} cannot be removed since it is out of bounds",self.position_start,
+				           self.position_end,
+				           self.context) 
+
+
+		else:
+			return None, Value.illegal_operator_error(other_node)
+
+	def divide_by(self,other_node):
+		if isinstance(other_node,Number):
+			other_node.value -=  1 
+			try:
+				return self.elements[other_node.value], None 
+			except :
+				return None, RuntimeError(f"IndexOutOfBound  : Element at index {other_node.value} cannot be accessed since it is out of bounds",self.position_start,
+				           self.position_end,
+				           self.context)
+		else:
+			return None, Value.illegal_operator_error(other_node)
+
+
+	def copy(self):
+		duplicate = List(self.elements[:])
+		duplicate.set_context(self.context)
+		duplicate.set_position(self.position_start,self.position_end)
+		return duplicate
+	def __repr__(self):
+		
+		if self.print_in_new_line:
+			output = "\n".join([str(x) for x in self.elements])
+			return output
+			
+		else:
+			return f'[{", ".join([str(x) for x in self.elements])}]'

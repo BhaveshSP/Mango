@@ -67,6 +67,10 @@ class Interpreter:
 		# Perform Division for Type Division Operator
 		elif node.operator_node.type == TT_DIV:
 			number, error =  left_child.divide_by(right_child)
+
+		# Perform Modulus for Type Modulus Operator
+		elif node.operator_node.type == TT_MOD:
+			number, error =  left_child.moded_by(right_child)
 		# Perform Addition for Type Power Operator
 		elif node.operator_node.type == TT_POW:
 			number, error = left_child.power(right_child)
@@ -177,7 +181,7 @@ class Interpreter:
 	# Get result after executing if condition
 	def visit_ForOperatorNode(self,node,context):
 		result = RuntimeResult()
-
+		elements = [] 
 		start_value = result.register(self.visit(node.start_value_node,context))
 		if result.error:
 			return result 
@@ -199,36 +203,34 @@ class Interpreter:
 			condition = lambda : i >= end_value.value 
 
 		while condition() :
-
 			context.symbol_table.set(node.var_name_token.value,Number(i))
 			i += step_value.value 
-			result.register(self.visit(node.body_node,context))
+			elements.append(result.register(self.visit(node.body_node,context)))
 			if result.error :
 				return result 
 
 
-		return result.success(None)
+		return result.success(List(elements,True).set_context(context).set_position(node.position_start,node.position_end))
 
 
 
 	# Get result after executing if condition
 	def visit_WhileOperatorNode(self,node,context):
+
 		result = RuntimeResult()
+		elements = [] 
 
 		while True :
-			
 			condition_evaluation = result.register(self.visit(node.condition_node,context))
-			
 			if result.error :
 				return result 
-
 			if not condition_evaluation.is_true():
 				break 
-			result.register(self.visit(node.body_node,context))
+			elements.append(result.register(self.visit(node.body_node,context)))
 			if result.error :
 				return result
-			 
-		return result.success(None)
+
+		return result.success(List(elements,True).set_context(context).set_position(node.position_start,node.position_end))
 
 	def visit_FunctionDefinitionNode(self,node,context):
 		result = RuntimeResult()
@@ -271,5 +273,14 @@ class Interpreter:
 	def visit_StringNode(self,node,context):	
 		return RuntimeResult().success(String(node.token.value).set_context(context).set_position(node.position_start,node.position_end))
 
+	def visit_ListNode(self,node,context):	
+		result = RuntimeResult()
+		elements = [] 
+
+		for element_node in node.element_nodes:
+			elements.append(result.register(self.visit(element_node,context)))
+			if result.error :
+				return result 
+		return result.success(List(elements).set_context(context).set_position(node.position_start,node.position_end))
 
 

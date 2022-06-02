@@ -82,7 +82,7 @@ class Parser:
 			else:
 				return result.failure(InvalidSyntaxError("Expected ')'",token.position_start,token.position_end))
 
-		elif self.current_token.matches(TT_KEYWORD,"if"):
+		elif token.matches(TT_KEYWORD,"if"):
 			if_expr = result.register(self.if_expression())
 			if result.error:
 				return result
@@ -91,7 +91,7 @@ class Parser:
 			self.advance()
 			return result.success(if_expr)
 
-		elif self.current_token.matches(TT_KEYWORD,"for"):
+		elif token.matches(TT_KEYWORD,"for"):
 			for_expr = result.register(self.for_expression())
 			if result.error:
 				return result
@@ -100,7 +100,7 @@ class Parser:
 			self.advance()
 			return result.success(for_expr)
 
-		elif self.current_token.matches(TT_KEYWORD,"while"):
+		elif token.matches(TT_KEYWORD,"while"):
 			while_expr = result.register(self.while_expression())
 			if result.error:
 				return result
@@ -109,7 +109,7 @@ class Parser:
 			self.advance()
 			return result.success(while_expr)
 
-		elif self.current_token.matches(TT_KEYWORD,"function"):
+		elif token.matches(TT_KEYWORD,"function"):
 			func_def = result.register(self.func_def())
 			if result.error:
 				return result
@@ -117,6 +117,15 @@ class Parser:
 			result.register_advancement()
 			self.advance()
 			return result.success(func_def)
+
+		elif token.type == TT_LSQUARE:
+			list_expr = result.register(self.list_expr())
+			if result.error:
+				return result
+			result.register_advancement()
+			self.advance()
+			return result.success(list_expr)
+
 
 		elif token.type == TT_IDENTIFIER :
 			result.register_advancement()
@@ -137,6 +146,49 @@ class Parser:
 			
 		
 		return result.failure(InvalidSyntaxError("Expected integer, float, identifier , '+', '-' , '(', if , for, while or function",token.position_start,token.position_end))
+
+	def list_expr(self):
+		result = ParserResult()
+		element_nodes = [] 
+		position_start = self.current_token.position_start.copy()
+
+		result.register_advancement()
+		self.advance()
+
+		if self.current_token.type == TT_RSQUARE:
+			result.register_advancement()
+			self.advance()
+		else:
+			temp_expr = result.register(self.expression())
+			if result.error:
+				return result.failure(InvalidSyntaxError("Expected ']', integer, float, identifier , '[', '+', '-' ",
+				                      self.current_token.position_start,
+				                      self.current_token.position_end
+				                      ))
+
+			element_nodes.append(temp_expr)
+
+			while self.current_token != None and self.current_token.type == TT_COMMA :
+				result.register_advancement()
+				self.advance()
+				temp_expr = result.register(self.expression())
+				if result.error:
+					return result 
+				element_nodes.append(temp_expr)
+
+
+			if self.current_token.type != TT_RSQUARE:
+				
+				return result.failure(InvalidSyntaxError("Expected ',' or ']'",
+				                      self.current_token.position_start,
+				                      self.current_token.position_end
+				                      ))
+		return result.success(ListNode(element_nodes,position_start,self.current_token.position_end.copy()))
+
+
+
+
+
 
 
 	def func_def(self):
@@ -398,7 +450,7 @@ class Parser:
 			else:
 				temp_expr = result.register(self.expression())
 				if result.error:
-					return result.failure(InvalidSyntaxError("Expected ')', integer, float, identifier , '+', '-' ",
+					return result.failure(InvalidSyntaxError("Expected ')', integer, float, identifier , if , for, while , function, '+', '-' , '(', '[' ,or  not ",
 					                      self.current_token.position_start,
 					                      self.current_token.position_end
 					                      ))
@@ -461,7 +513,7 @@ class Parser:
 		return result.success(left_node)
 
 	def term(self):
-		return self.binary_operator_helper(self.factor,(TT_MUL,TT_DIV))
+		return self.binary_operator_helper(self.factor,(TT_MUL,TT_DIV,TT_MOD))
 
 	def comp_expr(self):
 		result = ParserResult()
@@ -476,7 +528,7 @@ class Parser:
 			return result.success(UnaryOperatorNode(operator_token,node))
 		node = result.register(self.binary_operator_helper(self.arith_expr,(TT_NE,TT_EE,TT_LT,TT_LTE,TT_GT,TT_GTE)))
 		if result.error :
-			return result.failure(InvalidSyntaxError("Expected 'set', integer, float, identifier , '+', '-' , '(', or  not ",
+			return result.failure(InvalidSyntaxError("Expected 'set', integer, float, identifier , if , for, while , function, '+', '-' , '(', '[' ,or  not ",
 				                      self.current_token.position_start,
 				                      self.current_token.position_end
 				                      ))
@@ -513,7 +565,7 @@ class Parser:
 		node =  result.register(self.binary_operator_helper(self.comp_expr,((TT_KEYWORD,"and"),(TT_KEYWORD,"or"))))
 		
 		if result.error : 
-			return result.failure(InvalidSyntaxError("Expected 'set', integer, float, identifier , if , for, while , function, '+', '-' , '(', or  not ",
+			return result.failure(InvalidSyntaxError("Expected 'set', integer, float, identifier , if , for, while , function, '+', '-' , '(', '[' ,or  not ",
 				                      self.current_token.position_start,
 				                      self.current_token.position_end
 				                      ))
