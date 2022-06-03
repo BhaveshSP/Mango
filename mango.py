@@ -8,9 +8,29 @@ from include.Values import *
 # Create A Global Symbol Table 
 global_symbol_table = SymbolTable()
 # Set Prdefined Values for Certain Keywords
-global_symbol_table.set("null",Number(0))
-global_symbol_table.set("True",Number(1))
-global_symbol_table.set("False",Number(0))
+global_symbol_table.set("null",Number.null)
+global_symbol_table.set("True",Number.true)
+global_symbol_table.set("False",Number.false)
+global_symbol_table.set("MAX_INT",Number.MAX_INT)
+global_symbol_table.set("MIN_INT",Number.MIN_INT)
+global_symbol_table.set("MATH_PI",Number.MATH_PI)
+global_symbol_table.set("Print",BuiltInFunction.print)
+global_symbol_table.set("Return",BuiltInFunction.return_)
+global_symbol_table.set("Clear",BuiltInFunction.clear)
+global_symbol_table.set("Cls",BuiltInFunction.clear)
+global_symbol_table.set("Input",BuiltInFunction.input_)
+global_symbol_table.set("Input_Number",BuiltInFunction.input_number)
+global_symbol_table.set("isNumber",BuiltInFunction.is_number)
+global_symbol_table.set("isString",BuiltInFunction.is_string)
+global_symbol_table.set("isList",BuiltInFunction.is_list)
+global_symbol_table.set("isFunction",BuiltInFunction.is_function)
+global_symbol_table.set("Insert",BuiltInFunction.insert)
+global_symbol_table.set("Pop",BuiltInFunction.pop)
+global_symbol_table.set("Extend",BuiltInFunction.extend)
+global_symbol_table.set("Length",BuiltInFunction.length)
+
+
+
 
 # Runner 
 def run(file_name,text):

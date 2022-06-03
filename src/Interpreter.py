@@ -155,6 +155,7 @@ class Interpreter:
 		if value == None :
 			# if the variable doesn't exist return error
 			return result.failure(RuntimeError(f"'{var_name}' is not defined",node.position_start,node.position_end,context))
+		value = value.copy().set_context(context).set_position(node.position_start,node.position_end)
 		return result.success(value)
 
 	# Get result after executing if condition
@@ -171,11 +172,11 @@ class Interpreter:
 				if result.error :
 					return result 
 				break
-		if value == None :
+		if value == None and node.else_node != None :
 			value = result.register(self.visit(node.else_node ,context))
 			if result.error:
 				return result 
-		return result.success(value)
+		return result.success(value if value else Number.null)
 
 
 	# Get result after executing if condition
@@ -210,7 +211,7 @@ class Interpreter:
 				return result 
 
 
-		return result.success(List(elements,True).set_context(context).set_position(node.position_start,node.position_end))
+		return result.success(List(elements).set_context(context).set_position(node.position_start,node.position_end))
 
 
 
@@ -230,7 +231,7 @@ class Interpreter:
 			if result.error :
 				return result
 
-		return result.success(List(elements,True).set_context(context).set_position(node.position_start,node.position_end))
+		return result.success(List(elements).set_context(context).set_position(node.position_start,node.position_end))
 
 	def visit_FunctionDefinitionNode(self,node,context):
 		result = RuntimeResult()
@@ -268,6 +269,7 @@ class Interpreter:
 		return_value = result.register(value_to_call.execute(args,result_new,interpreter_new))
 		if result.error:
 			return result
+		result_value = return_value.copy().set_context(context).set_position(node.position_start,node.position_end)
 		return result.success(return_value)
 
 	def visit_StringNode(self,node,context):	
