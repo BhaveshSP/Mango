@@ -296,12 +296,12 @@ class BaseFunction(Value):
 
 class Function(BaseFunction):
 
-	def __init__(self,name,arg_names,body_node,should_return_null):
+	def __init__(self,name,arg_names,body_node,should_auto_return):
 		super().__init__(name)
 		self.arg_names = arg_names
 		self.body_node = body_node
 		self.args_size = len(arg_names)
-		self.should_return_null = should_return_null
+		self.should_auto_return = should_auto_return
 
 
 
@@ -310,17 +310,19 @@ class Function(BaseFunction):
 		execution_context = self.generate_context()
 		result.register(self.check_and_populate_args(result,self.arg_names,passed_args,execution_context))
 		
-		if result.error :
+		if result.should_return() :
 			return result 
 
 		return_value = result.register(interpreter.visit(self.body_node,execution_context))
-		if result.error :
+		if result.should_return() and result.function_return_value == None :
 			return result
-		return result.success(Number.null if self.should_return_null else return_value)
+		return_value = (value if self.should_auto_return else None ) or result.function_return_value or Number.null
+		
+		return result.success(return_value)
 
 
 	def copy(self):
-		duplicate = Function(self.name,self.arg_names,self.body_node,self.should_return_null)
+		duplicate = Function(self.name,self.arg_names,self.body_node,self.should_auto_return)
 		duplicate.set_context(self.context)
 		duplicate.set_position(self.position_start,self.position_end)
 		return duplicate
@@ -334,7 +336,6 @@ class BuiltInFunction(BaseFunction):
 		super().__init__(name)
 
 	def execute(self,passed_args,result,interpreter):
-		
 		execution_context = self.generate_context()
 		method_name = f"execute_{self.name}"
 		method = getattr(self,method_name,self.no_execution_method)

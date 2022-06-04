@@ -94,7 +94,11 @@ class Parser:
 	# Functions Created According to the Grammer Rules 
 
 
+
+
+
 	def statements(self):
+
 		result = ParserResult()
 		statement_list = [] 
 		position_start = self.current_token.position_start.copy()
@@ -102,42 +106,58 @@ class Parser:
 			result.register_advancement()
 			self.advance()
 
-		expr = result.register(self.expression())
+		expr = result.register(self.statement())
 		if result.error:
 			return result 
 		statement_list.append(expr)
 
+
 		more_statements = True 
-
-
-		while more_statements:
+		while True:
 			count = 0 
 			while self.current_token != None and self.current_token.type == TT_NEXTLINE:
 				
 				result.register_advancement()
 				self.advance()
 				count += 1 
-
 			if count == 0 :
 				more_statements = False 
-			else:
-				statement = result.try_register(self.expression())
-				if not statement :
-					self.reverse(result.reverse_count)
-					more_statements = False 
-					continue
-				statement_list.append(statement)
-
-
+			if not more_statements :
+				break
+			statement = result.try_register(self.statement())
+			if not statement :
+				self.reverse(result.reverse_count)
+				more_statements = False 
+				continue
+			statement_list.append(statement)
 
 		return result.success(ListNode(statement_list,position_start,self.current_token.position_end.copy()))
 
+	def statement(self):
+		result = ParserResult()
+		position_start = self.current_token.position_start.copy()
+		if self.current_token.matches(TT_KEYWORD,"return"):
+			result.register_advancement()
+			self.advance()
+			expr = result.try_register(self.expression())
+			if not expr :
+				self.reverse(result.reverse_count)
+			return result.success(ReturnNode(expr,position_start,self.current_token.position_start.copy()))
 
+		elif self.current_token.matches(TT_KEYWORD,"break"):
+			result.register_advancement()
+			self.advance()
+			return result.success(BreakNode(position_start,self.current_token.position_start.copy()))
+		elif self.current_token.matches(TT_KEYWORD,"continue"):
+			result.register_advancement()
+			self.advance()
+			return result.success(ContinueNode(position_start,self.current_token.position_start.copy()))
 
+		expr = result.register(self.expression())
+		if result.error :
+			return result.failure(InvalidSyntaxError("Expected integer, float, identifier , return, break, continue, '+', '-' , '(', if , for, while or function",self.current_token.position_start,self.current_token.position_end))
 
-
-
-
+		return result.success(expr)
 
 	def atom(self):
 		result = ParserResult()
@@ -158,9 +178,9 @@ class Parser:
 			if_expr = result.register(self.if_expression())
 			if result.error:
 				return result
-
-			result.register_advancement()
-			self.advance()
+			if not self.current_token.type == TT_NEXTLINE:
+				result.register_advancement()
+				self.advance()
 			return result.success(if_expr)
 
 		elif token.matches(TT_KEYWORD,"for"):
@@ -268,7 +288,7 @@ class Parser:
 		var_name_token = None 
 		args_names_tokens = []
 		node_to_return = None 
-		return_bool = False 
+		return_bool = True 
 
 		result.register_advancement()
 		self.advance()
@@ -333,7 +353,7 @@ class Parser:
 			                      ))
 			# result.register_advancement()
 			# self.advance()
-			return_bool =  True 
+			return_bool =  False 
 
 		else:
 			return result.failure(InvalidSyntaxError("Expected '=>' or Newline",self.current_token.position_start,self.current_token.position_end))
@@ -438,7 +458,7 @@ class Parser:
 			body_value_node = result.register(self.statements())
 			if result.error :
 				return result 
-
+				
 			if not self.current_token.matches(TT_KEYWORD,"end"):
 				return result.failure(InvalidSyntaxError("Expected 'end'",
 			                      self.current_token.position_start,
@@ -451,7 +471,7 @@ class Parser:
 
 		else:			
 
-			body_value_node = result.register(self.expression())
+			body_value_node = result.register(self.statement())
 			if result.error :
 				return result 
 
@@ -505,7 +525,7 @@ class Parser:
 			return_bool = True 
 
 		else:			
-			body_value_node = result.register(self.expression())
+			body_value_node = result.register(self.statement())
 			if result.error :
 				return result 
 
@@ -553,19 +573,17 @@ class Parser:
 					return result 
 				elif_cases,else_node = all_cases
 				cases.extend(elif_cases)
+
 		else:
-			temp_expr = result.register(self.expression())
+			temp_expr = result.register(self.statement())
 			if result.error :
 				return result 
 			cases.append((condition,temp_expr,False))
-
 			all_cases = result.register(self.elif_expr_or_else_expr())
 			if result.error : 
 				return result 
 			elif_cases,else_node = all_cases
 			cases.extend(elif_cases)
-
-
 		return result.success((cases,else_node))
 
 
@@ -609,7 +627,7 @@ class Parser:
 				result.register_advancement()
 				self.advance()
 			else:
-				expr = result.register(self.expression())
+				expr = result.register(self.statement())
 				if result.error :
 					return result 
 				else_node = (expr,False)

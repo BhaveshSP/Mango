@@ -112,7 +112,7 @@ class WhileOperatorNode:
 
 # Node to Store the Function Definition in AST 
 class FunctionDefinitionNode:
-	def __init__(self,var_name_token,arg_name_tokens,body_node,should_return_null):
+	def __init__(self,var_name_token,arg_name_tokens,body_node,should_auto_return):
 		self.var_name_token = var_name_token
 		self.arg_name_tokens = arg_name_tokens
 		self.body_node = body_node
@@ -125,12 +125,11 @@ class FunctionDefinitionNode:
 			self.position_start = body_node.position_start
 
 		self.position_end = body_node.position_end
-		self.should_return_null = should_return_null
+		self.should_auto_return = should_auto_return
 
 
 # Node to Store the Function Call in AST 
 class CallNode:
-
 	def __init__(self,node_to_call,arg_nodes):
 		self.node_to_call = node_to_call
 		self.arg_nodes = arg_nodes
@@ -140,3 +139,20 @@ class CallNode:
 			self.position_end = arg_nodes[-1].position_end
 		else:
 			self.position_end = node_to_call.position_end
+
+class ReturnNode:
+	def __init__(self,node_to_return,position_start,position_end):
+		self.node_to_return = node_to_return 
+		self.position_start = position_start
+		self.position_end = position_end
+
+class BreakNode:
+	def __init__(self,position_start,position_end):
+		self.position_start = position_start
+		self.position_end = position_end
+
+class ContinueNode:
+	def __init__(self,position_start,position_end):
+		self.position_start = position_start
+		self.position_end = position_end
+	

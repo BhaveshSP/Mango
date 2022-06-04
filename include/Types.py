@@ -35,4 +35,4 @@ LETTERS = string.ascii_letters
 LETTERS_DIGITS =LETTERS + DIGITS 
 KEYWORDS = ["set","and","or","not" ,"if","then",
             "elseif","else","for","do","step","with",
-            "to","while","function","end"] 
+            "to","while","function","end","return","break","continue"] 

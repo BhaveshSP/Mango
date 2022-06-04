@@ -1,5 +1,9 @@
-statements   : NEXTLINE* expr (NEXTLINE+ expr)* NEXTLINE*
+statements   : NEXTLINE* statement (NEXTLINE+ statement)* NEXTLINE*
 
+statement    : KEYWORDS:RETURN expr?
+             : KEYWORDS:CONTINUE
+             : KEYWORDS:BREAK
+             : expr
 
 expr         : KEYWORDS:SET IDENTIFIER EQ expr 
              : comp-expr ((KEYWORD:OR|KEYWORD:AND) comp-expr)*
@@ -30,24 +34,24 @@ atom         : INT|FLOAT|STRING|IDENTIFIER
 list-expr    : LSQUARE (expr (COMMA expr)*)? RSQUARE
 
 if-expr      : KEYWORDS:IF expr KEYWORDS:THEN 
-               (expr elif-expr|else-expr?)
+               (statement elif-expr|else-expr?)
                | (NEXTLINE* statements KEYWORDS:END|elif-expr|else-expr)
 
 elif-expr    : KEYWORDS:ELIF expr KEYWORDS:THEN 
-               (expr elif-expr|else-expr?)
+               (statement elif-expr|else-expr?)
                | (NEXTLINE* statements KEYWORDS:END|elif-expr|else-expr)
 
 else-expr    : KEYWORDS:ELSE  
-               (expr) | (NEXTLINE* statements KEYWORDS:END) 
+               (statement) | (NEXTLINE* statements KEYWORDS:END) 
 
   
 for-expr     : KEYWORDS:FOR IDENTIFIER EQ expr KEYWORDS:TO expr 
                (KEYWORDS:WITH KEYWORDS:STEP expr)? KEYWORDS:DO 
-               (expr) | (NEXTLINE* statements KEYWORDS:END) 
+               (statement) | (NEXTLINE* statements KEYWORDS:END) 
 
 
 while-expr   : KEYWORDS:WHILE expr KEYWORDS:DO 
-               (expr) | (NEXTLINE* statements KEYWORDS:END) 
+               (statement) | (NEXTLINE* statements KEYWORDS:END) 
 
 
 func-def     : KEYWORDS:FUNCTION IDENTIFIER? 
