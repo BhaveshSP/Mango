@@ -28,7 +28,7 @@ global_symbol_table.set("Insert",BuiltInFunction.insert)
 global_symbol_table.set("Pop",BuiltInFunction.pop)
 global_symbol_table.set("Extend",BuiltInFunction.extend)
 global_symbol_table.set("Length",BuiltInFunction.length)
-
+global_symbol_table.set("Run",BuiltInFunction.run)
 
 
 

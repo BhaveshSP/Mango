@@ -1,8 +1,10 @@
 from include.Error import * 
 from include.Util import * 
+import mango  
 import os 
 import sys 
 import math 
+
 
 # Number Data Structure for representing and performing operations 
 # on Integers or Floats
@@ -485,6 +487,32 @@ class BuiltInFunction(BaseFunction):
 	execute_length.arg_names = ["value"]
 
 
+	def execute_run(self,result,context):
+
+		file_name = context.symbol_table.get("file_name")
+		if not isinstance(file_name,String):
+			return result.failure(RuntimeError(f"File Name Must be a String for method Run(filename)",self.position_start,
+				           self.position_end,
+				           self.context))
+		file_name = file_name.value 
+		try:
+			with open(file_name,"r") as f:
+				script = f.read()
+		except Exception as e:
+			return result.failure(RuntimeError(f"Failed to load Script\n",self.position_start,
+				           self.position_end,
+				           self.context))
+		output, error = mango.run(file_name,script)
+		if error :
+			print(error.to_string())
+			return result.failure(RuntimeError(f"Failed to finish executing the script {file_name} \n",self.position_start,
+				           self.position_end,
+				           self.context))
+		return result.success(Number.null)
+
+
+	execute_run.arg_names = ["file_name"]
+	
 	def __repr__(self):
 		return f"<built-function {self.name}>"
 
@@ -502,7 +530,7 @@ BuiltInFunction.insert = BuiltInFunction("insert")
 BuiltInFunction.pop = BuiltInFunction("pop")
 BuiltInFunction.extend = BuiltInFunction("extend")
 BuiltInFunction.length = BuiltInFunction("length")
-
+BuiltInFunction.run = BuiltInFunction("run")
 
 
 class String(Value):

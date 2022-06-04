@@ -34,6 +34,8 @@ class Lexer:
 	 		# If Space or Tabs in the Sentence Ignore 
 	 		if self.current_char in " \t":
 	 			pass
+	 		elif self.current_char == "#":
+	 			self.pass_comments()
 	 		# Create Token for Respective Operation Type 
 	 		elif self.current_char == "+":
 	 			token = Token(TT_PLUS,self.position)
@@ -119,6 +121,11 @@ class Lexer:
 	 			tokens.append(token)
 	 	tokens.append(Token(TT_EOF,self.position))
 	 	return tokens,error  
+
+	 def pass_comments(self):
+	 	self.advance()
+	 	while self.current_char!= None and self.current_char != "\n":
+	 		self.advance()
 
 	 # Create token for Not Equals
 	 def make_not_equal(self):
