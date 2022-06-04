@@ -163,7 +163,7 @@ class Interpreter:
 		result = RuntimeResult()
 		cases = node.cases
 		value = None 
-		for condition,expr in cases:
+		for condition,expr,should_return_null in cases:
 			condition_evaluation = result.register(self.visit(condition,context))
 			if result.error :
 				return result 
@@ -171,12 +171,14 @@ class Interpreter:
 				value = result.register(self.visit(expr,context))
 				if result.error :
 					return result 
-				break
-		if value == None and node.else_node != None :
-			value = result.register(self.visit(node.else_node ,context))
+				return result.success(Number.null if should_return_null else value)
+		if node.else_node != None :
+			should_return_null = node.else_node[1]
+			value = result.register(self.visit(node.else_node[0] ,context))
 			if result.error:
 				return result 
-		return result.success(value if value else Number.null)
+			return result.success(Number.null if should_return_null else value)
+		return result.success(Number.null)
 
 
 	# Get result after executing if condition
@@ -211,7 +213,7 @@ class Interpreter:
 				return result 
 
 
-		return result.success(List(elements).set_context(context).set_position(node.position_start,node.position_end))
+		return result.success(Number.null if node.should_return_null else List(elements).set_context(context).set_position(node.position_start,node.position_end))
 
 
 
@@ -231,7 +233,7 @@ class Interpreter:
 			if result.error :
 				return result
 
-		return result.success(List(elements).set_context(context).set_position(node.position_start,node.position_end))
+		return result.success(Number.null if node.should_return_null else List(elements).set_context(context).set_position(node.position_start,node.position_end))
 
 	def visit_FunctionDefinitionNode(self,node,context):
 		result = RuntimeResult()
@@ -241,7 +243,7 @@ class Interpreter:
 		body_node = node.body_node
 		arg_names = [arg.value for arg in node.arg_name_tokens]
 
-		func_value = Function(name,arg_names,body_node).set_context(context).set_position(node.position_start,node.position_end)
+		func_value = Function(name,arg_names,body_node,node.should_return_null).set_context(context).set_position(node.position_start,node.position_end)
 
 		if name:
 			context.symbol_table.set(name,func_value)
@@ -265,7 +267,6 @@ class Interpreter:
 
 		result_new = RuntimeResult()
 		interpreter_new = Interpreter()
-
 		return_value = result.register(value_to_call.execute(args,result_new,interpreter_new))
 		if result.error:
 			return result

@@ -51,7 +51,6 @@ def run(file_name,text):
 	ast = parser.parse()
 	if ast.error :
 		return None , ast.error 
-	# print(ast.node)
 	# Initialize the Interpreter 
 	interpreter = Interpreter()
 	# Create Root Context 

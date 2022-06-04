@@ -10,19 +10,31 @@ class ParserResult:
 		self.node = None 
 		self.error = None 
 		self.advance_count = 0 
+		self.reverse_count = 0
+		self.last_registered_advance_count = 0 
+
 
 	def register_advancement(self):
 		self.advance_count += 1 
+		self.last_registered_advance_count = 1
 
 	def register_decreament(self):
-		self.advance_count += 1 
-
+		self.advance_count -= 1 
 
 	def register(self,result):
+		self.last_registered_advance_count = result.advance_count
 		self.advance_count += result.advance_count
 		if result.error :
 			self.error = result.error 
 		return result.node
+
+
+
+	def try_register(self,result):
+		if result.error :
+			self.reverse_count = result.advance_count
+			return None 
+		return result.register(result)
 
 	def success(self,node):
 		self.node = node 
@@ -47,7 +59,7 @@ class Parser:
 
 	def parse(self): 
 		# It is create according to the rules in the Grammer 
-		result = self.expression()
+		result = self.statements()
 		if not result.error and self.current_token.type != TT_EOF:
 			return result.failure(InvalidSyntaxError("Expected 'set', '+','-','*', '/' or '^'",self.current_token.position_start,self.current_token.position_end))
 		return result 
@@ -57,14 +69,74 @@ class Parser:
 		if self.index < self.size :
 			self.current_token = self.tokens[self.index]
 		return self.current_token 
+
+	def advance(self):
+		self.index += 1 
+		self.update_token()
+		return self.current_token 
+
+	def update_token(self):
+		if self.index >= 0 and self.index < self.size :
+			self.current_token = self.tokens[self.index]
+
+	def reverse(self,amount=1):
+		self.index -= amount 
+		self.update_token()
+		return self.current_token
+
+
 	def go_back(self):
 		self.index -= 1 
-		if self.index >=0 :
-			self.current_token = self.tokens[self.index]
+		self.update_token()
 		return self.current_token
 
 
 	# Functions Created According to the Grammer Rules 
+
+
+	def statements(self):
+		result = ParserResult()
+		statement_list = [] 
+		position_start = self.current_token.position_start.copy()
+		while self.current_token.type == TT_NEXTLINE:
+			result.register_advancement()
+			self.advance()
+
+		expr = result.register(self.expression())
+		if result.error:
+			return result 
+		statement_list.append(expr)
+
+		more_statements = True 
+
+
+		while more_statements:
+			count = 0 
+			while self.current_token != None and self.current_token.type == TT_NEXTLINE:
+				
+				result.register_advancement()
+				self.advance()
+				count += 1 
+
+			if count == 0 :
+				more_statements = False 
+			else:
+				statement = result.try_register(self.expression())
+				if not statement :
+					self.reverse(result.reverse_count)
+					more_statements = False 
+					continue
+				statement_list.append(statement)
+
+
+
+		return result.success(ListNode(statement_list,position_start,self.current_token.position_end.copy()))
+
+
+
+
+
+
 
 
 	def atom(self):
@@ -196,6 +268,7 @@ class Parser:
 		var_name_token = None 
 		args_names_tokens = []
 		node_to_return = None 
+		return_bool = False 
 
 		result.register_advancement()
 		self.advance()
@@ -237,17 +310,36 @@ class Parser:
 		self.advance()
 
 
-		if self.current_token.type != TT_ARROW:
-			return result.failure(InvalidSyntaxError("Expected '=>'",self.current_token.position_start,self.current_token.position_end))
+		if self.current_token.type == TT_ARROW:
+			
+			result.register_advancement()
+			self.advance()
 
-		result.register_advancement()
-		self.advance()
+
+			node_to_return = result.register(self.expression())
+			if result.error :
+				return result
+		elif self.current_token.type == TT_NEXTLINE:
+			result.register_advancement()
+			self.advance()
+
+			node_to_return = result.register(self.statements())
+			if result.error :
+				return result 
+			if not self.current_token.matches(TT_KEYWORD,"end"):
+				return result.failure(InvalidSyntaxError("Expected 'end'",
+			                      self.current_token.position_start,
+			                      self.current_token.position_end
+			                      ))
+			# result.register_advancement()
+			# self.advance()
+			return_bool =  True 
+
+		else:
+			return result.failure(InvalidSyntaxError("Expected '=>' or Newline",self.current_token.position_start,self.current_token.position_end))
 
 
-		node_to_return = result.register(self.expression())
-		if result.error :
-			return result 
-		return result.success(FunctionDefinitionNode(var_name_token,args_names_tokens,node_to_return))
+		return result.success(FunctionDefinitionNode(var_name_token,args_names_tokens,node_to_return,return_bool))
 
 
 
@@ -260,6 +352,7 @@ class Parser:
 		end_value_node = None 
 		step_value_node = None 
 		body_value_node = None 
+		return_bool = False
 		
 		result.register_advancement()
 		self.advance()
@@ -336,12 +429,33 @@ class Parser:
 
 		result.register_advancement()
 		self.advance()
+		if self.current_token.type == TT_NEXTLINE:
 
-		body_value_node = result.register(self.expression())
-		if result.error :
-			return result 
+			result.register_advancement()
+			self.advance()
 
-		return result.success(ForOperatorNode(var_name,start_value_node,end_value_node,step_value_node,body_value_node))
+			
+			body_value_node = result.register(self.statements())
+			if result.error :
+				return result 
+
+			if not self.current_token.matches(TT_KEYWORD,"end"):
+				return result.failure(InvalidSyntaxError("Expected 'end'",
+			                      self.current_token.position_start,
+			                      self.current_token.position_end
+			                      ))
+
+			# result.register_advancement()
+			# self.advance()
+			return_bool = True 
+
+		else:			
+
+			body_value_node = result.register(self.expression())
+			if result.error :
+				return result 
+
+		return result.success(ForOperatorNode(var_name,start_value_node,end_value_node,step_value_node,body_value_node,return_bool))
 
 	def while_expression(self):
 
@@ -349,6 +463,7 @@ class Parser:
 
 		condition = None 
 		body_value_node = None 
+		return_bool = False 
 
 		result.register_advancement()
 		self.advance()
@@ -368,11 +483,90 @@ class Parser:
 		result.register_advancement()
 		self.advance()
 
-		body_value_node = result.register(self.expression())
-		if result.error :
-			return result 
-		return result.success(WhileOperatorNode(condition,body_value_node))
 
+		if self.current_token.type == TT_NEXTLINE:
+
+			result.register_advancement()
+			self.advance()
+			
+			body_value_node = result.register(self.statements())
+			
+			if result.error :
+				return result 
+
+			if not self.current_token.matches(TT_KEYWORD,"end"):
+				return result.failure(InvalidSyntaxError("Expected 'end'",
+			                      self.current_token.position_start,
+			                      self.current_token.position_end
+			                      ))
+
+			# result.register_advancement()
+			# self.advance()
+			return_bool = True 
+
+		else:			
+			body_value_node = result.register(self.expression())
+			if result.error :
+				return result 
+
+
+		return result.success(WhileOperatorNode(condition,body_value_node,return_bool))
+
+
+	def if_expression_helper(self,case_name):
+
+		result = ParserResult()
+		cases = []
+		else_node = None
+		if not self.current_token.matches(TT_KEYWORD,case_name):
+			return result.failure(InvalidSyntaxError(f"Expected '{case_name}'",
+			                      self.current_token.position_start,
+			                      self.current_token.position_end
+			                      ))
+		result.register_advancement()
+		self.advance()
+
+		condition = result.register(self.expression())
+		if result.error :
+			 return result 
+
+		if not self.current_token.matches(TT_KEYWORD,"then"):
+			return result.failure(InvalidSyntaxError("Expected 'then' after <condition>",
+			                      self.current_token.position_start,
+			                      self.current_token.position_end
+			                      ))
+		
+		result.register_advancement()
+		self.advance()
+
+		if self.current_token.type == TT_NEXTLINE :
+			result.register_advancement()
+			self.advance()
+			statement_list = result.register(self.statements())
+			if result.error:
+				return result 
+			cases.append((condition,statement_list,True))
+
+			if not self.current_token.matches(TT_KEYWORD,"end"):
+				all_cases = result.register(self.elif_expr_or_else_expr())
+				if result.error : 
+					return result 
+				elif_cases,else_node = all_cases
+				cases.extend(elif_cases)
+		else:
+			temp_expr = result.register(self.expression())
+			if result.error :
+				return result 
+			cases.append((condition,temp_expr,False))
+
+			all_cases = result.register(self.elif_expr_or_else_expr())
+			if result.error : 
+				return result 
+			elif_cases,else_node = all_cases
+			cases.extend(elif_cases)
+
+
+		return result.success((cases,else_node))
 
 
 
@@ -380,57 +574,61 @@ class Parser:
 		result = ParserResult()
 		cases = []
 		else_node = None 
-		result.register_advancement()
-		self.advance()
-		condition = result.register(self.expression())
-		if result.error:
-			return result.failure(InvalidSyntaxError("Expected a <condition> after an if statement",
-			                      self.current_token.position_start,
-			                      self.current_token.position_end
-			                      ))
-
-		if not self.current_token.matches(TT_KEYWORD,"then"):
-			return result.failure(InvalidSyntaxError("Expected 'then' after <condition>",
-			                      self.current_token.position_start,
-			                      self.current_token.position_end
-			                      ))
-		result.register_advancement()
-		self.advance()
-		temp_expr = result.register(self.expression())
+		all_cases = result.register(self.if_expression_helper("if"))
 		if result.error :
 			return result 
-		cases.append((condition,temp_expr))
-		while self.current_token.matches(TT_KEYWORD,"elseif"):
-			result.register_advancement()
-			self.advance()
-			condition = result.register(self.expression())
-			if result.error:
-				return result.failure(InvalidSyntaxError("Expected a <condition> after an if or elseif statement",
-				                      self.current_token.position_start,
-				                      self.current_token.position_end
-				                      ))
-			if not self.current_token.matches(TT_KEYWORD,"then"):
-				return result.failure(InvalidSyntaxError("Expected 'then' after <condition>",
-				                      self.current_token.position_start,
-				                      self.current_token.position_end
-				                      ))
-			result.register_advancement()
-			self.advance()
-			temp_expr = result.register(self.expression())
-			if result.error :
-				return result 
-			cases.append((condition,temp_expr)) 
+		cases,else_node = all_cases
+
+		return result.success(IfOperatorNode(cases,else_node))
+
+
+	def elif_expr(self):
+		return self.if_expression_helper("elseif")
+
+	def else_expr(self):
+		result  = ParserResult()
+		else_node = None 
 		if self.current_token.matches(TT_KEYWORD,"else"):
 			result.register_advancement()
 			self.advance()
-			else_node = result.register(self.expression())
+
+			if self.current_token.type == TT_NEXTLINE:
+				
+				result.register_advancement()
+				self.advance()
+
+				statements = result.register(self.statements())
+				if result.error:
+					return result 
+				if not self.current_token.matches(TT_KEYWORD,"end"):
+					return result.failure(InvalidSyntaxError("Expected 'end'",
+			                      self.current_token.position_start,
+			                      self.current_token.position_end
+			                      ))
+				else_node = (statements,True)
+				result.register_advancement()
+				self.advance()
+			else:
+				expr = result.register(self.expression())
+				if result.error :
+					return result 
+				else_node = (expr,False)
+
+		return result.success(else_node)
+
+
+	def elif_expr_or_else_expr(self):
+		result = ParserResult()
+		cases = []
+		else_node = None 
+		if self.current_token.matches(TT_KEYWORD,"elseif"):
+			all_cases = result.register(self.elif_expr())
+			cases, else_node = all_cases
+		else:
+			else_node = result.register(self.else_expr())
 			if result.error :
 				return result 
-		else:
-			result.register_decreament()
-			self.go_back()
-
-		return result.success(IfOperatorNode(cases,else_node))
+		return result.success((cases,else_node))
 
 	def power(self):
 		return self.binary_operator_helper(self.call,(TT_POW,),self.factor)

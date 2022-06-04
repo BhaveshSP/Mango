@@ -296,11 +296,12 @@ class BaseFunction(Value):
 
 class Function(BaseFunction):
 
-	def __init__(self,name,arg_names,body_node):
+	def __init__(self,name,arg_names,body_node,should_return_null):
 		super().__init__(name)
 		self.arg_names = arg_names
 		self.body_node = body_node
 		self.args_size = len(arg_names)
+		self.should_return_null = should_return_null
 
 
 
@@ -315,11 +316,11 @@ class Function(BaseFunction):
 		return_value = result.register(interpreter.visit(self.body_node,execution_context))
 		if result.error :
 			return result
-		return result.success(return_value)
+		return result.success(Number.null if self.should_return_null else return_value)
 
 
 	def copy(self):
-		duplicate = Function(self.name,self.arg_names,self.body_node)
+		duplicate = Function(self.name,self.arg_names,self.body_node,self.should_return_null)
 		duplicate.set_context(self.context)
 		duplicate.set_position(self.position_start,self.position_end)
 		return duplicate

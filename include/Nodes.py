@@ -79,16 +79,16 @@ class IfOperatorNode:
 		self.cases = cases
 		self.else_node = else_node 
 		self.position_start = cases[0][0].position_start
-		self.position_end = cases[-1][1].position_end
+		self.position_end = cases[-1][0].position_end
 		if else_node :
-		 self.position_end = else_node.position_end
+		 self.position_end = else_node[0].position_end
 	def __repr__(self):
 		return f"conditions:{self.cases},else:{self.else_node}"
 
 
 # Node to Store the For Loop Values in AST 
 class ForOperatorNode:
-	def __init__(self,var_name_token, start_value_node, end_value_node, step_value_node, body_node):
+	def __init__(self,var_name_token, start_value_node, end_value_node, step_value_node, body_node, should_return_null):
 		self.var_name_token = var_name_token
 		self.start_value_node = start_value_node
 		self.end_value_node = end_value_node
@@ -96,21 +96,23 @@ class ForOperatorNode:
 		self.body_node = body_node
 		self.position_start = var_name_token.position_start
 		self.position_end = body_node.position_end
+		self.should_return_null = should_return_null
 
 
 # Node to Store the While Loop Values is AST 
 class WhileOperatorNode:
-	def __init__(self,condition_node,body_node):
+	def __init__(self,condition_node,body_node,should_return_null):
 		self.condition_node = condition_node 
 		self.body_node = body_node
 		self.position_start = condition_node.position_start
 		self.position_end = body_node.position_end
+		self.should_return_null = should_return_null
 
 
 
 # Node to Store the Function Definition in AST 
 class FunctionDefinitionNode:
-	def __init__(self,var_name_token,arg_name_tokens,body_node):
+	def __init__(self,var_name_token,arg_name_tokens,body_node,should_return_null):
 		self.var_name_token = var_name_token
 		self.arg_name_tokens = arg_name_tokens
 		self.body_node = body_node
@@ -123,6 +125,7 @@ class FunctionDefinitionNode:
 			self.position_start = body_node.position_start
 
 		self.position_end = body_node.position_end
+		self.should_return_null = should_return_null
 
 
 # Node to Store the Function Call in AST 

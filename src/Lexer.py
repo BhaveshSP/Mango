@@ -80,10 +80,6 @@ class Lexer:
 	 			token = Token(TT_NEXTLINE,self.position)
 
 
-	 		# Create token for TT_NEXTLINE
-	 		elif self.current_char in  ";\n":
-	 			token = Token(TT_NEXTLINE,self.position)
-	 			
 	 		elif self.current_char == '"':
 	 			token, error = self.make_string()
 	 		# Create token for Not Equals

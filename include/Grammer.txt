@@ -1,4 +1,4 @@
-statements   :
+statements   : NEXTLINE* expr (NEXTLINE+ expr)* NEXTLINE*
 
 
 expr         : KEYWORDS:SET IDENTIFIER EQ expr 
@@ -29,15 +29,27 @@ atom         : INT|FLOAT|STRING|IDENTIFIER
 
 list-expr    : LSQUARE (expr (COMMA expr)*)? RSQUARE
 
-if-expr      : KEYWORDS:IF expr KEYWORDS:THEN expr
-               (KEYWORDS:ELSEIF expr KEYWORDS:THEN expr)*
-               (KEYWORDS:ELSE expr)?
+if-expr      : KEYWORDS:IF expr KEYWORDS:THEN 
+               (expr elif-expr|else-expr?)
+               | (NEXTLINE* statements KEYWORDS:END|elif-expr|else-expr)
+
+elif-expr    : KEYWORDS:ELIF expr KEYWORDS:THEN 
+               (expr elif-expr|else-expr?)
+               | (NEXTLINE* statements KEYWORDS:END|elif-expr|else-expr)
+
+else-expr    : KEYWORDS:ELSE  
+               (expr) | (NEXTLINE* statements KEYWORDS:END) 
+
   
 for-expr     : KEYWORDS:FOR IDENTIFIER EQ expr KEYWORDS:TO expr 
-               (KEYWORDS:WITH KEYWORDS:STEP expr)? KEYWORDS:DO expr 
+               (KEYWORDS:WITH KEYWORDS:STEP expr)? KEYWORDS:DO 
+               (expr) | (NEXTLINE* statements KEYWORDS:END) 
 
 
-while-expr   : KEYWORDS:WHILE expr KEYWORDS:DO expr
+while-expr   : KEYWORDS:WHILE expr KEYWORDS:DO 
+               (expr) | (NEXTLINE* statements KEYWORDS:END) 
+
 
 func-def     : KEYWORDS:FUNCTION IDENTIFIER? 
-                LPAREN (IDENTIFIER (COMMA IDENTIFIER)*)? RPAREN ARROW expr
+               LPAREN (IDENTIFIER (COMMA IDENTIFIER)*)? RPAREN  
+               (ARROW expr) | (NEXTLINE* statements KEYWORDS:END) 
