@@ -1,4 +1,13 @@
 import mango 
+import pyfiglet 
+print("###################################################################")
+print("")
+print("Welcome to Mango(Aam) Programming Language ")
+print("Feel free to Play Around!!")
+print("")
+print("###################################################################")
+print("")
+print("")
 
 while True :
 	command = input("mango> ")

@@ -1,0 +1,19 @@
+function check_prime(number) 
+	if number % 2 == 0 then return False
+	if number == 0 then return False 
+	set i = 3
+	
+	while i < number - 1  do 
+		if number % i == 0 then
+			return False
+		end 
+		set i = i+2 
+	end 
+	return True 
+end 
+
+Print("Enter a Number")
+
+set p = Input_Number()
+
+if check_prime(p) then Print("Prime") else Print("Not Prime")

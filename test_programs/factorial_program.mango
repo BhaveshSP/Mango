@@ -1,0 +1,9 @@
+set n = Input_Number()
+Print(n)
+
+set  result  = 1
+for i = n to 1 with step = -1 do 
+	set result = result * i
+end 
+Print("Factorial = ")
+Print(result)

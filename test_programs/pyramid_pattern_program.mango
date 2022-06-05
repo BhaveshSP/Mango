@@ -1,0 +1,9 @@
+Print("Enter Height of Pyramid")
+set n = Input_Number()
+
+Print("Enter Block Char for Pyramid\n")
+while True do 
+	set c = Input()
+	if Length(c) == 1 then break else Print("Enter Only One Character\n") 
+end
+for i = 0 to n-1 do Print(" "*(n-i-1) + c*(2*i+1))

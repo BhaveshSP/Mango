@@ -358,7 +358,6 @@ class Interpreter:
 				return result
 		else:
 			value = Number.null
-		print(value)
 		return result.success_return(value)
 
 

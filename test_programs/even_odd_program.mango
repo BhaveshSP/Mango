@@ -1,0 +1,2 @@
+set n = Input_Number()
+if n % 2 == 0 then Print("Even") else Print("Odd")
